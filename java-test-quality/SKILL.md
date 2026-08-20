@@ -1,6 +1,7 @@
 ---
 name: java-test-quality
 description: Teach, design, write, strengthen, or review trustworthy tests for Java and Quarkus code. Use for regression tests, weak or false-positive tests, JUnit strategy, Quarkus component/HTTP/persistence/security tests, boundary analysis, state isolation, concurrency, JaCoCo coverage quality, PIT mutation testing, or test-quality audits. Do not use merely to run an unchanged suite.
+license: MIT
 ---
 
 # Java and Quarkus Test Quality
