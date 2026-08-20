@@ -1,6 +1,6 @@
 # Java Test Quality
 
-**[Instalar com skills.sh](https://skills.sh/ThiagoCrepequer/java-test-quality)**
+**[Instalar com skills.sh](https://skills.sh/thiagocrepequer/java-test-quality/java-test-quality)**
 
 ```bash
 npx skills add ThiagoCrepequer/java-test-quality
