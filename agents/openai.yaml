@@ -1,0 +1,4 @@
+interface:
+  display_name: "Java Test Quality"
+  short_description: "Behavior-first Java and Quarkus test engineering"
+  default_prompt: "Use $java-test-quality to design, write, or review trustworthy Java and Quarkus tests for this change."
