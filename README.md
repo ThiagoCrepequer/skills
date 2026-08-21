@@ -1,39 +1,39 @@
 # Java Test Quality
 
-**[Instalar com skills.sh](https://skills.sh/thiagocrepequer/java-test-quality/java-test-quality)**
+[![Install with skills.sh](https://skills.sh/b/ThiagoCrepequer/java-test-quality)](https://www.skills.sh/thiagocrepequer/java-test-quality/java-test-quality)
 
 ```bash
 npx skills add ThiagoCrepequer/java-test-quality
 ```
 
-Skill para agentes de código projetarem, escreverem e revisarem testes confiáveis em Java e Quarkus.
+An agent skill for designing, writing, strengthening, and reviewing trustworthy tests in Java and Quarkus projects.
 
-## O que ela faz
+## What it does
 
-Orienta o agente a transformar regras de negócio e contratos técnicos em evidências executáveis. A skill cobre JUnit, componentes CDI, HTTP, persistência real, segurança, concorrência, isolamento de estado, JaCoCo e PIT Mutation Testing.
+It teaches coding agents to turn business rules and technical contracts into executable evidence. It covers JUnit, CDI components, HTTP contracts, real persistence, security, concurrency, state isolation, JaCoCo, and PIT mutation testing.
 
-Ela ajuda a evitar testes que passam sem provar o comportamento, como asserções apenas de presença, mocks que removem o risco testado, fixtures sem dados concorrentes e métricas de cobertura usadas como sinônimo de qualidade.
+It rejects tests that pass without proving behavior: presence-only assertions, mocks that remove the risk under test, fixtures without competing data, arbitrary sleeps, leaked state, and coverage treated as a synonym for quality.
 
-## Filosofia
+## Philosophy
 
-Um bom teste deve ser simultaneamente:
+A good test should be:
 
-- **sensível a bugs:** uma regressão plausível quebra o teste;
-- **tolerante a refatorações:** mudanças internas que preservam o contrato mantêm o teste passando;
-- **fiel ao risco:** banco, HTTP, CDI ou segurança participam quando fazem parte do comportamento;
-- **isolado e determinístico:** nenhum cenário depende de ordem, estado compartilhado, sleeps ou relógio real;
-- **honesto:** relata exatamente o que foi validado e o que permanece fora do escopo.
+- **Bug-sensitive:** a plausible regression makes it fail.
+- **Refactor-tolerant:** internal changes that preserve the contract keep it passing.
+- **Faithful to the risk:** database, HTTP, CDI, or security participates when it owns the behavior.
+- **Isolated and deterministic:** no scenario depends on order, shared state, sleeps, or wall-clock time.
+- **Honest:** its validation scope and remaining uncertainty are reported precisely.
 
-Mutation score e cobertura são sinais de diagnóstico. A confiança vem de um contrato claro, fixtures discriminantes e um oráculo independente capaz de rejeitar resultados incorretos.
+Mutation score and coverage are diagnostic signals. Confidence comes from a clear contract, discriminating fixtures, and an independent oracle capable of rejecting incorrect outcomes.
 
-## Conteúdo
+## Contents
 
-O entrypoint está em [`java-test-quality/SKILL.md`](java-test-quality/SKILL.md). As referências aprofundam princípios de bons testes, camadas do Quarkus, asserções, fixtures, test doubles, riscos concorrentes e análise de mutações.
+The entrypoint is [`java-test-quality/SKILL.md`](java-test-quality/SKILL.md). Its references cover good-test principles, Quarkus test layers, assertions, fixtures, test doubles, concurrency risks, and mutation analysis.
 
-## Uso
+## Usage
 
 ```text
-$java-test-quality Escreva testes de regressão para este serviço Quarkus e prove o isolamento entre tenants.
+$java-test-quality Write regression tests for this Quarkus service and prove tenant isolation.
 ```
 
-Licenciado sob [MIT](LICENSE).
+Licensed under [MIT](LICENSE).
