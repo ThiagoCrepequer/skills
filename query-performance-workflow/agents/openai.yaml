@@ -1,0 +1,4 @@
+interface:
+  display_name: "Query Performance Workflow"
+  short_description: "Measure and optimize SQL without behavior regressions"
+  default_prompt: "Use $query-performance-workflow to investigate this expensive query, preserve its behavior, and validate the optimized application-generated SQL."
