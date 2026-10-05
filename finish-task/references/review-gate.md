@@ -46,7 +46,7 @@ A reported implementation/spec mismatch stays a finding. Rewording the issue to 
 
 When BLOCKED or INCOMPLETE, halt normal Jira metadata/description updates and readiness promotion. Summarize the findings and all pending steps. Leave the existing commits and PR available for review. Do not repair the implementation automatically in a finalization run after finding a defect.
 
-The pending-findings Jira comment is an explicit exception to this stop: record the review and what prevents continuation, if Jira access permits. Follow [jira-updates.md](jira-updates.md) for comment identity and visibility. A failure to post the comment leaves that operation pending; it never converts the verdict to PASS.
+The pending-findings Jira comment is an explicit exception to this stop: record the review and what prevents continuation, if Jira access permits. Delegate the supplied review context to [fill-jira-task](../../fill-jira-task/SKILL.md) in **Findings only** mode; that specialist owns comment identity and visibility. A failure to post the comment leaves that operation pending; it never converts the verdict to PASS.
 
 Continue only after the human fixes/authorizes fixes and the affected changes are reviewed, or explicitly accepts the specified unresolved findings. A generic acknowledgement, silence, or acceptance from another agent is insufficient. An existing acceptance applies only to the identified findings, scope, and reviewed revision; do not extend it to newly introduced problems. Be precise about failed, waived, pending, and unrun checks.
 

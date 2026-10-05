@@ -1,4 +1,4 @@
 interface:
   display_name: "Finish Task"
-  short_description: "Finalize task commits, PR, review, and Jira metadata"
-  default_prompt: "Use $finish-task to finalize this task, review it against Jira and project standards, and update its metadata."
+  short_description: "Finalize Git, PR, and review with a Jira companion"
+  default_prompt: "Use $finish-task to finalize this task, review it against Jira and project standards, and use $fill-jira-task to reconcile its Jira metadata."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fill Jira Task"
+  short_description: "Fill Jira metadata, estimates, and task descriptions"
+  default_prompt: "Use $fill-jira-task to fill or reconcile the supported Jira fields for this issue while preserving its reports and requirements."

@@ -54,11 +54,11 @@ Possible sections are **Context / report**, **Objective**, **Expected behavior a
 
 | Existing description | Action |
 | --- | --- |
-| Absent | Create a concise, evidence-backed description from the task summary, approved decisions, and reviewed user/operational outcomes. Do not invent reports, users, business rules, or product acceptance. |
+| Absent | Create a concise, evidence-backed description from the task summary, approved decisions, and trustworthy user/operational outcomes when available. Do not invent reports, users, business rules, or product acceptance. |
 | Incomplete/inaccurate | Make the narrow additions/corrections required to capture the approved scope and actual resulting behavior while preserving original evidence. |
 | Complete/accurate | Leave it unchanged, including its formatting. Do not rewrite merely to fit the suggested headings. |
 
-Before updating, compare the original contract with the reviewed implementation. A missing original requirement is a review finding; it is not an outdated description. Only reconcile it after an explicit scope decision/acceptance, retaining the prior promise and the decision where important. Code behavior alone cannot prove that a statement in Jira is wrong.
+Before updating, compare the original contract with approved task decisions and the evidence available for the requested operation. In a finalization handoff, also use the caller's reviewed implementation; this specialist consumes that review rather than running one. Standalone filling does not require application code, a PR, or review evidence. If a proposed correction lacks support, retain the original statement and request only the facts needed for that correction. A missing implemented requirement identified by a finalization review is a finding, not an outdated description. Only reconcile it after an explicit scope decision/acceptance, retaining the prior promise and the decision where important. Code behavior alone cannot prove that a statement in Jira is wrong.
 
 Important information includes customer/user reports, reproduction steps, dates/periods, affected populations, examples and counterexamples, business constraints, historical decisions, attachments, links, and unresolved items. Preserve these in the existing description or a clearly labeled historical/decision section within the ticket when restructuring. Do not remove reported symptoms just because they are fixed. Clearly distinguish the approved target behavior from superseded notes when both remain useful.
 

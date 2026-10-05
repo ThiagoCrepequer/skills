@@ -1,6 +1,6 @@
 ---
 name: finish-task
-description: Finalize an implemented Jira task by isolating its Git changes, creating atomic Conventional Commits, opening or updating its pull request, reviewing against the original task and project standards, and reconciling Jira metadata. Use when asked to finish a task, prepare its handoff, or close out implementation work with Jira and a PR. Does not merge, deploy, or transition Jira status by default.
+description: Finalize an implemented Jira task by isolating its Git changes, creating atomic Conventional Commits, opening or updating its pull request, reviewing against the original task and project standards, and delegating Jira metadata to the fill-jira-task companion skill. Use when asked to finish a task, prepare its handoff, or close out implementation work with Jira and a PR. Does not merge, deploy, or transition Jira status by default.
 license: MIT
 ---
 
@@ -12,9 +12,11 @@ Turn implemented work into a reviewable handoff, with an honest review verdict a
 
 Ask for the Jira issue key before changing Git or remote state, unless the user already supplied an unambiguous key for this execution. Do not silently select a ticket from the branch name or conversation history. Normalize the supplied key and resolve numeric IDs or issue URLs through Jira when needed.
 
-Read applicable `AGENTS.md`, contribution guidance, PR templates, test commands, and project architecture/standards. Discover the available Jira MCP, authenticated CLI, or configured API client; prefer an existing connection. Never invent tool names, field IDs, CLI flags, credentials, or an authenticated identity.
+Read applicable `AGENTS.md`, contribution guidance, PR templates, test commands, and project architecture/standards.
 
-Fetch the issue's summary, original description, issue type, project, parent/epic, assignee, points, and relevant comments, attachments, and linked decisions. Keep the original requirements as the review baseline, before editing the description. If the ticket cannot be retrieved, request the missing access/context and stop dependent publication/reconciliation; do not claim spec review passed.
+**Required companion:** load `fill-jira-task` from the skill catalog or [its repository entrypoint](../fill-jira-task/SKILL.md). This is a skill handoff within the same task, not a request to create another chat or require a second user prompt. Resolve the companion before dependent work; if it is unavailable, search its configured skill locations and report the missing dependency. Continue only independent read-only inspection; do not recreate its policies or silently install it.
+
+Use `$fill-jira-task` in **Context** mode with the supplied key to retrieve the current issue and original/approved requirements without writes. Keep the returned original requirements and version/updated metadata as the review baseline. If the issue cannot be retrieved, request the missing access/context and stop dependent publication/reconciliation; do not claim spec review passed.
 
 Identify every repository needed to deliver this task. Record a compact execution ledger: issue key, repository and base, branch/worktree, initial staged/unstaged/untracked changes, task commits, PR URL, reviewed head/base SHAs, validation, review findings/acceptances, and Jira fields actually changed. This supports safe retries rather than duplicating work.
 
@@ -54,21 +56,17 @@ Inspect available review/test-quality skills and use relevant guidance when avai
 
 Use a precise verdict: **PASS**, **BLOCKED** (actionable findings), **INCOMPLETE** (insufficient access/evidence), or **ACCEPTED WITH PENDING FINDINGS** (the human explicitly accepted identified risks). Missing requirements must not be made to disappear by rewriting Jira. New commits, a changed base, or changed requirements invalidate the previous verdict and require review of the affected scope.
 
-If review is blocked or incomplete, stop the normal finalization steps. Keep the PR review-pending and report what remains. **The only Jira write allowed at this gate is the requested pending-findings comment**, described in [references/jira-updates.md](references/jira-updates.md); do not update parent, assignee, points, or description. Do not automatically fix findings or continue after a timeout. Resume only after fixes are reviewed or the human explicitly accepts the specified outstanding findings; acceptance is not a passing test or review.
+If review is blocked or incomplete, stop the normal finalization steps. Keep the PR review-pending and report what remains. **The only Jira write allowed at this gate is the requested pending-findings comment:** hand off the review context to `$fill-jira-task` in **Findings only** mode. Metadata reconciliation stays pending. Do not automatically fix findings or continue after a timeout. Resume only after fixes are reviewed or the human explicitly accepts the specified outstanding findings; acceptance is not a passing test or review.
 
-## 4. Reconcile Jira after the gate
+## 4. Delegate Jira reconciliation after the gate
 
-Read [references/jira-updates.md](references/jira-updates.md) and [references/estimation-and-description.md](references/estimation-and-description.md).
+Use the loaded [fill-jira-task](../fill-jira-task/SKILL.md) companion in **Reconcile** mode only with PASS or applicable, explicit human acceptance. The specialist owns field discovery, epic/assignee/points/description policies, comments, concurrency checks, and persistence verification; keep those instructions there rather than duplicating them here.
 
-With PASS or a recorded, applicable human acceptance, prepare and apply only supported, relevant field changes:
+Supply the same issue key and requested field scope, original requirements snapshot/version and approved decisions, all task PR URLs and reviewed/current head/base SHAs, validation evidence, verdict, findings, and any specific human acceptance. Obtain fresh revision/context evidence before handoff. For multiple repositories, the gate covers all task PRs. Never substitute another agent's agreement for human acceptance.
 
-- **Parent/epic:** inspect existing epics and choose a defensible match. Never create an epic. Preserve a fitting parent and valid subtask hierarchy; report ambiguity instead of inventing a category.
-- **Assignee:** only when empty, assign the authenticated Jira actor (or the explicitly identified acting user). Verify identity and assignability; do not infer them from Git author, reporter, or display name.
-- **Story points:** discover the applicable field and compare similar historical tasks. Use the user's scale **1 / 3 / 5 / 8**, considering scope, coupling, risk, uncertainty, and verification. Preserve a justified estimate; reconcile a missing/outdated one with a short rationale.
-- **Description:** leave a complete, accurate description unchanged. Otherwise create or narrowly correct a task-focused account of context, intended outcome, behavior, and relevant acceptance conditions. Preserve reports, decisions, important details, and links. Keep deep implementation/test logs in the PR. Never erase an unimplemented promise to match the code.
-- **Pending findings:** add or update a concise Jira comment for unresolved findings, including human acceptance when applicable. Avoid duplicate comments for the same review.
+The companion returns the actual changed, retained, unsupported, ambiguous, failed, or pending fields and any findings comment identity. Record that result in the execution ledger and final summary. If it reports a stale/unverified review or changed requirements, return to the review gate before further reconciliation. A partial field update is not a complete Jira reconciliation.
 
-Re-read edited fields immediately before writing to detect concurrent changes, then verify every mutation with a fresh read. Continue independent supported updates when one field is unavailable and report partial completion. Before marking a newly created draft ready, confirm its current head/base still match the accepted review and required checks; never promote a blocked or incomplete review.
+Before marking a newly created draft ready, confirm its current head/base and requirements still match the accepted review and required checks; never promote a blocked or incomplete review. A metadata-only specialist invocation does not establish a code review verdict.
 
 ## 5. Report the handoff
 

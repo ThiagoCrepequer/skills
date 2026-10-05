@@ -24,7 +24,7 @@ Official references: [authenticated Jira user](https://developer.atlassian.com/c
 
 For each requested property, record current value, proposed value, reason, and whether it is supported/editable. A field being globally listed does not prove that it applies to this issue type/project or is writable on its screen. Avoid creating replacement custom fields or changing project configuration.
 
-Only reconcile metadata after PASS or applicable, explicit human acceptance. On a blocked/incomplete review, the pending-findings comment below is the sole allowed Jira write.
+Honor the operation and caller contract in [the skill entrypoint](../SKILL.md). Context is read-only. Standalone Reconcile needs an authorized metadata request and trustworthy task context, not a code review or PR. When called by finish-task, reconcile only after PASS or applicable, explicit human acceptance at current reviewed revisions/requirements. On a blocked/incomplete/unverified finalization review, Findings only is the sole write operation.
 
 Before each write, re-read the fields it could overwrite. If another user changed them, preserve that newer input and recompute the proposal; ask for resolution only when the conflict is material. Send only the intended changed fields, never a stale copy of the whole issue. After writing, read them again and compare actual persisted values.
 
@@ -54,7 +54,7 @@ Classify the description as absent, incomplete/inaccurate, or complete/accurate.
 
 ## Pending-findings comment: the review-gate exception
 
-The user requested a Jira comment whenever findings remain pending. This is authorized even when BLOCKED/INCOMPLETE prevents other finalization writes. Read recent comments first; reuse/update the comment created by this workflow for the same PR/review when the connection permits. Preserve other users' comments. After a timeout or unknown result, re-read before retrying so a successful write is not duplicated.
+For a finalization handoff, the user requested a Jira comment whenever supplied findings or material review limitations remain pending. This is authorized even when BLOCKED/INCOMPLETE prevents other finalization writes. In a standalone run, comment only on relevant findings actually supplied in the authorized task context; do not invent a review or run one here. Read recent comments first; reuse/update the comment created by this workflow for the same PR/review when the connection permits. Preserve other users' comments. After a timeout or unknown result, re-read before retrying so a successful write is not duplicated.
 
 Use a stable identity such as task key + task PR URL(s) + reviewed head SHA(s), with a human-readable heading `Finalization review`. Include only actionable, task-related information:
 
@@ -78,6 +78,6 @@ Respect the issue's comment visibility and the connector's service-desk internal
 
 ## Partial completion and retries
 
-Independent supported fields can still be reconciled if another field fails after the review gate. Record each success/failure, re-read results, and do not claim all Jira updates completed. Stop retrying the same permission/schema failure after inspecting its cause; choose a supported route or report the precise pending operation. Do not roll back another user's edits or automatically undo successful independent changes.
+Independent supported fields can still be reconciled if another field fails during an eligible Reconcile operation; Findings only never permits field updates. Record each success/failure, re-read results, and do not claim all Jira updates completed. Stop retrying the same permission/schema failure after inspecting its cause; choose a supported route or report the precise pending operation. Do not roll back another user's edits or automatically undo successful independent changes.
 
-Re-runs discover existing commits, PRs, unchanged metadata, and matching comments first. If the reviewed revision/spec changed, return to the review gate before applying new metadata. Transitioning issue status, moving it to Done, creating issues/epics, and editing unrelated tickets are outside this skill's default scope.
+Re-runs inspect current metadata, supplied review/PR identities, and matching comments first; Git commits and PR creation remain the caller's responsibility. In a finalization handoff, if the reviewed revision/spec changed, return to the caller for review before applying new metadata. Transitioning issue status, moving it to Done, creating issues/epics, and editing unrelated tickets are outside this skill's default scope.
