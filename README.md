@@ -4,6 +4,7 @@ Reusable agent skills for evidence-led software engineering.
 
 ## Available skills
 
+- [better-auth-d1](better-auth-d1/SKILL.md): implement and qualify Better Auth authentication on Cloudflare D1 with Drizzle, using persistence, OAuth recovery, concurrency, and security evidence.
 - [query-performance-workflow](query-performance-workflow/SKILL.md): investigate expensive application queries, preserve behavior with regression tests, capture ORM SQL, and validate optimization with representative execution plans.
 - [react-test-quality](react-test-quality/SKILL.md): design, write, strengthen, and review trustworthy React and JavaScript/TypeScript tests.
 - [java-test-quality](java-test-quality/SKILL.md): design, write, strengthen, and review trustworthy Java and Quarkus tests.
@@ -23,6 +24,7 @@ npx skills add ThiagoCrepequer/skills
 Install a specific skill:
 
 ```bash
+npx skills add ThiagoCrepequer/skills --skill better-auth-d1
 npx skills add ThiagoCrepequer/skills --skill react-test-quality
 npx skills add ThiagoCrepequer/skills --skill java-test-quality
 npx skills add ThiagoCrepequer/skills --skill fill-jira-task
