@@ -1,114 +1,114 @@
-# Runtime, persistência e recuperação
+# Runtime, persistence, and recovery
 
-## Evidência de referência
+## Reference evidence
 
-Verificada em **2026-10-05**, com Better Auth/core/Drizzle adapter **1.7.7**,
-Drizzle ORM **0.45.3**, Workerd e D1 locais. Não generalizar para outra release,
-plugin, provider, schema ou configuração de storage.
+Verified on **2026-10-05**, with Better Auth/core/Drizzle adapter **1.7.7**,
+Drizzle ORM **0.45.3**, and local Workerd and D1. Do not generalize to another
+release, plugin, provider, schema, or storage configuration.
 
-| Configuração exercitada | Observação local |
+| Exercised configuration | Local observation |
 | --- | --- |
-| Drizzle SQLite/D1, `transaction: false` | Login nativo funciona; User e Account são INSERTs separados. |
-| Falha no INSERT Account após User | User persiste; Account/Session não são concluídas. |
-| Linking implícito desabilitado | Novo OAuth com mesmo email encontra User parcial e pode terminar `account_not_linked`. |
-| Linking nativo, email recebido e local verificados, `trustedProviders: []` | Novo OAuth com code novo recupera Account e autentica mantendo o User original. |
-| Email recebido ou local não verificado | O vínculo implícito é negado nessa configuração. |
-| Email muda antes de criar Account | Pode ser criado outro User; o anterior continua incompleto. |
-| Adapter D1 nativo da mesma release | Conserva as limitações relevantes de cadastro parcial e parser OAuth. |
-| `consumeOne`/consumo de verification diretamente | Consumo atômico dá um vencedor; isso não significa que o parser OAuth o usa. |
+| Drizzle SQLite/D1, `transaction: false` | Native login works; User and Account are separate INSERTs. |
+| Account INSERT fails after User | User persists; Account/Session are not completed. |
+| Implicit linking disabled | A new OAuth flow with the same email finds the partial User and can end in `account_not_linked`. |
+| Native linking, received and local email verified, `trustedProviders: []` | A new OAuth flow with a new code recovers Account and authenticates while preserving the original User. |
+| Received or local email unverified | Implicit linking is denied in this configuration. |
+| Email changes before Account creation | Another User can be created; the earlier one remains incomplete. |
+| Native D1 adapter from the same release | Retains the relevant partial-signup and OAuth-parser limitations. |
+| Direct `consumeOne`/verification consumption | Atomic consumption produces one winner; this does not mean the OAuth parser uses it. |
 
-A recuperação por linking não faz rollback nem torna User/Account atômicos.
-Desabilitar linking pode ser uma escolha correta de identidade; nesse caso a
-estratégia de recuperação precisa satisfazer o contrato do projeto por outro
-caminho suportado. Não habilite linking silenciosamente para contornar o erro.
+Linking-based recovery does not roll back writes or make User/Account atomic.
+Disabling linking can be a correct identity choice; in that case, the recovery
+strategy must satisfy the project's contract through another supported path.
+Do not silently enable linking to bypass the error.
 
-## Inventário mínimo
+## Minimum inventory
 
-Confirme versões **resolvidas**, e não apenas ranges de peers:
+Confirm **resolved** versions, not just peer ranges:
 
-- Better Auth, core, adapters, Drizzle ORM/Kit e plugins habilitados;
-- pacote/import realmente usado e eventuais duplicatas de core/adapter;
-- Worker bindings, compatibility date/flags e configuração do runner de testes;
-- schema gerado, nomes/mapeamentos de tabelas/campos, relações e migrations;
-- armazenamento de verification/state, sessão, cookie cache e secondary storage;
-- origem/base URL por ambiente, client/provider e callbacks registrados.
+- Better Auth, core, adapters, Drizzle ORM/Kit, and enabled plugins;
+- the actual package/import in use and any duplicate core/adapter packages;
+- Worker bindings, compatibility date/flags, and test-runner configuration;
+- generated schema, table/field names and mappings, relationships, and migrations;
+- verification/state storage, session, cookie cache, and secondary storage;
+- origin/base URL per environment, client/provider, and registered callbacks.
 
-Use os comandos do projeto; não assuma que exemplos com `@latest` identificam
-uma composição reproduzível. Gere schema com CLI compatível, revise seu SQL e
-aplique somente no ambiente autorizado. Não rode migrations por request de login.
+Use project commands; do not assume examples with `@latest` identify a
+reproducible composition. Generate the schema with a compatible CLI, review its SQL,
+and apply it only in the authorized environment. Do not run migrations per login request.
 
-## Transação não é batch
+## Transactions and batches
 
-No driver Drizzle D1 0.45.3, `transaction()` emite BEGIN/COMMIT/ROLLBACK; a presença
-do método e seu tipo não demonstram que o binding suporta transação interativa.
-O adapter Drizzle qualificado manteve `transaction: false`.
+In the Drizzle D1 0.45.3 driver, `transaction()` emits BEGIN/COMMIT/ROLLBACK;
+the method's presence and type do not demonstrate that the binding supports
+interactive transactions. The qualified Drizzle adapter retained `transaction: false`.
 
-`D1.batch()` executa statements em uma transação; falha de statement aborta a
-sequência. Isso não agrupa automaticamente duas operações sequenciais feitas
-por Better Auth. Trace o callback e observe as escritas reais antes de prometer
-atomicidade. O anúncio de suporte D1/batch da biblioteca não prova batch em
-cada fluxo de signup ou plugin.
+`D1.batch()` executes statements in a transaction; a statement failure aborts
+the sequence. This does not automatically group two sequential operations made
+by Better Auth. Trace the callback and observe the actual writes before promising
+atomicity. The library's announcement of D1/batch support does not prove batching
+in every signup or plugin flow.
 
-Também não confunda zero rows com erro: uma guarda que afeta zero rows pode
-ser seguida por outro INSERT no mesmo batch. Escritas dependentes devem carregar
-a condição de autorização/estado ou um mecanismo suportado que impeça o efeito.
-Teste a ausência de linhas/efeitos quando a guarda falha.
+Also distinguish zero rows from an error: a guard affecting zero rows can be
+followed by another INSERT in the same batch. Dependent writes must carry the
+authorization/state condition or use a supported mechanism that prevents the effect.
+Test the absence of rows/effects when the guard fails.
 
-O D1 nativo foi adicionado ao Better Auth antes da release qualificada. A
-[documentação de outros bancos](https://better-auth.com/docs/adapters/other-relational-databases)
-ainda lista `kysely-d1` como dialect comunitário; isso não invalida o caminho
-nativo documentado no anúncio da versão 1.5. Qualifique o caminho instalado.
-Trocar Drizzle por Kysely/D1 não corrige uma sequência find/delete no core OAuth.
+Native D1 was added to Better Auth before the qualified release. The
+[documentation for other databases](https://better-auth.com/docs/adapters/other-relational-databases)
+still lists `kysely-d1` as a community dialect; this does not invalidate the
+native path documented in the version 1.5 announcement. Qualify the installed path.
+Switching Drizzle to Kysely/D1 does not fix a find/delete sequence in the OAuth core.
 
-## Schema e constraints
+## Schema and constraints
 
-Compare o schema ORM com a tabela física D1: colunas, tipos/unidades de timestamps,
-nullability, defaults, relações, índices e FKs. Um SQLite Node em memória não
-substitui essa prova. Verifique a tradução de booleans/datas pelo adapter.
+Compare the ORM schema with the physical D1 table: columns, timestamp types/units,
+nullability, defaults, relationships, indexes, and FKs. In-memory SQLite in Node
+does not replace this evidence. Verify the adapter's translation of booleans/dates.
 
-A identidade externa deve usar o subject estável no namespace correto do issuer,
-não email ou username. Quando o contrato exige um único vínculo por identidade,
-prove a unicidade física correspondente, incluindo namespaces de múltiplos
-issuers/clientes se aplicável. Não imponha uma chave simples sem qualificar a
-semântica do provider/plugin. Duplicata concorrente precisa ter resultado seguro
-e recuperação observável; uma constraint lançando erro não prova UX concluída.
+External identity must use the stable subject in the correct issuer namespace,
+not email or username. When the contract requires a single link per identity,
+prove the corresponding physical uniqueness, including multiple issuer/client
+namespaces when applicable. Do not impose a simple key without qualifying the
+provider/plugin semantics. Concurrent duplicates need a safe outcome and observable
+recovery; a constraint throwing an error does not prove a completed user experience.
 
-D1/Drizzle suportados no core não significam suporte para todo plugin. Verifique
-requisitos de transações, schema e runtime de cada plugin; a documentação SCIM
-consultada informa incompatibilidade com D1 por exigir transações interativas.
-Não habilite SAML/SCIM, organization ou providers extras por disponibilidade.
+Core D1/Drizzle support does not imply support for every plugin. Verify each
+plugin's transaction, schema, and runtime requirements; the consulted SCIM
+documentation reports D1 incompatibility because it requires interactive transactions.
+Do not enable SAML/SCIM, organization, or extra providers merely because they are available.
 
-## Política de linking e efeitos de cadastro
+## Linking policy and signup effects
 
-Na configuração qualificada, linking nativo exigiu email recebido verificado e
-User local verificado. `trustedProviders` pode dispensar a verificação recebida;
-`requireLocalEmailVerified` e outros flags podem alterar a proteção. Registre o
-valor efetivo, não apenas a intenção. Providers diferentes precisam de garantias
-próprias e reautenticação quando o produto a exigir.
+In the qualified configuration, native linking required a verified received email
+and a verified local User. `trustedProviders` can waive received-email verification;
+`requireLocalEmailVerified` and other flags can change the protection. Record the
+effective value, not just the intent. Different providers need their own guarantees
+and reauthentication when the product requires it.
 
-Email verificado é controle atual de um endereço transferível/reutilizável.
-Debata risco de reaproveitamento, comprometimento e providers administrados antes
-de aprovar associação implícita. Não trate o vínculo como prova histórica de que
-subjects diferentes sempre pertencem à mesma pessoa.
+Verified email means current control of a transferable/reusable address.
+Discuss reuse, compromise, and managed-provider risks before approving implicit
+association. Do not treat the link as historical proof that different subjects
+have always belonged to the same person.
 
-Login nativo com email não verificado pode ser permitido mesmo quando linking
-não verificado é negado. São políticas distintas. Operações que exigem ownership
-atual do endereço não podem usar somente um `emailVerified` antigo.
+Native login with unverified email can be allowed while unverified linking is
+denied. These are separate policies. Operations requiring current address ownership
+cannot rely solely on an old `emailVerified` value.
 
-Evite conceder recursos, permissões ou efeitos externos apenas a partir de
-`user.create`: o callback pode falhar antes de Account/Session. Quando tais efeitos
-existirem, escolha uma fronteira de login/vínculo concluído e prove idempotência.
-Defina a política de User incompleto, reconciliação e limpeza sem apagar uma
-identidade válida ou transferir permissões por coincidência de email.
+Avoid granting resources, permissions, or external effects solely from
+`user.create`: the callback can fail before Account/Session. When such effects
+exist, choose a completed-login/linking boundary and prove idempotency.
+Define the policy for incomplete User records, reconciliation, and cleanup without
+deleting a valid identity or transferring permissions because emails happen to match.
 
-## Segurança e performance têm provas próprias
+## Security and performance need their own evidence
 
-Meça número de queries/round trips e planos/índices relevantes na composição
-real. Joins só ajudam quando adapter e relações corretas os suportam; uma
-alegação de ganho na documentação não é benchmark da aplicação. A redução de
-latência não autoriza cache de autorização sem prazo ou leitura obsoleta de
-revogação. Qualifique consistência se usar D1 Sessions/read replication.
+Measure query/round-trip counts and relevant plans/indexes in the actual composition.
+Joins help only when the adapter and correct relationships support them; a documented
+performance claim is not an application benchmark. Lower latency does not authorize
+unbounded authorization caching or stale revocation reads. Qualify consistency when
+using D1 Sessions/read replication.
 
-Não adicione KV, outro banco, replica ou uma camada de cache por tentativa de
-resolver algo cujo call graph continua incorreto. Mudanças de persistência devem
-preservar as provas de identidade, recuperação, concorrência e migração.
+Do not add KV, another database, a replica, or a cache layer to try to solve
+something whose call graph remains incorrect. Persistence changes must preserve
+the identity, recovery, concurrency, and migration evidence.

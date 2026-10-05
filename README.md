@@ -38,6 +38,10 @@ npx skills add ThiagoCrepequer/skills --skill finish-task fill-jira-task
 
 See the individual skill READMEs for usage examples. The migrated test-quality skills include their original MIT licenses in their respective directories.
 
+## Authoring language
+
+Write skill instructions, supporting references, READMEs, examples, and agent UI metadata in English. Preserve code identifiers, commands, and source URLs. Skills may still produce task content and user-facing responses in the language requested by the user or required by the project.
+
 ## Migration provenance
 
 The test-quality skills were migrated from their standalone repositories. Their original commits are retained in this repository's Git history.

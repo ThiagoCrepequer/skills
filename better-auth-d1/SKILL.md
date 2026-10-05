@@ -1,82 +1,82 @@
 ---
 name: better-auth-d1
-description: Implementar, investigar ou revisar autenticação com Better Auth, Cloudflare D1 e Drizzle ORM, usando provas reais de persistência, recuperação OAuth, concorrência e segurança de sessão. Use também para comparar o adapter D1 nativo ou qualificar upgrades dessa combinação; não para migração genérica de banco ou auditoria sem relação com autenticação.
+description: Implement, investigate, or review authentication with Better Auth, Cloudflare D1, and Drizzle ORM using real evidence of persistence, OAuth recovery, concurrency, and session security. Also use to compare the native D1 adapter or qualify upgrades of this combination; not for generic database migration or audits unrelated to authentication.
 license: MIT
 ---
 
-# Better Auth no D1 com Drizzle
+# Better Auth on D1 with Drizzle
 
-Produza uma composição suportada e uma prova reproduzível das suas garantias.
-Compatibilidade de tipos, um login bem-sucedido ou uma sessão final não provam
-atomicidade, recuperação de cadastro ou ausência de repetição de code.
+Deliver a supported composition and reproducible evidence of its guarantees.
+Type compatibility, a successful login, or a final session does not prove
+atomicity, signup recovery, or the absence of authorization-code reuse.
 
-## Parta da configuração real
+## Start from the actual configuration
 
-Leia as instruções do projeto e determine o pedido: investigação, implementação,
-revisão ou upgrade. Identifique versões resolvidas no lockfile, adapter/imports,
-config auth, plugins, schema físico, migrations, bindings, compatibility date,
-cookies e superfícies HTTP. Consulte documentação oficial e fonte da release
-instalada; registre data, divergências e premissas do provider.
+Read project instructions and determine the request: investigation, implementation,
+review, or upgrade. Identify resolved lockfile versions, adapter/imports,
+auth configuration, plugins, physical schema, migrations, bindings, compatibility date,
+cookies, and HTTP surfaces. Consult official documentation and the installed
+release's source; record the date, discrepancies, and provider assumptions.
 
-Use [runtime e persistência](references/runtime-and-persistence.md) para
-qualificar D1/Drizzle, schema, cadastro parcial e linking. A evidência datada ali
-é um ponto de partida, não recomendação de fixar uma versão antiga.
+Use [runtime and persistence](references/runtime-and-persistence.md) to
+qualify D1/Drizzle, schema, partial signup, and linking. Its dated evidence
+is a starting point, not a recommendation to pin an old version.
 
-## Separe as garantias
+## Separate the guarantees
 
-1. **Persistência:** observe a ordem e a fronteira real das escritas. Não equipare
-   `db.transaction()` a `D1.batch()` nem habilite transação interativa sem suporte.
-2. **Identidade:** escolha conscientemente a política de linking. Email verificado
-   prova controle atual do endereço, não identidade histórica ou grant de acesso.
-3. **OAuth:** verifique vínculo com browser/transação, integridade de state, PKCE
-   e uso único de code separadamente. Uma primitiva atômica no adapter só protege
-   o fluxo que realmente a chama.
-4. **Sessão/HTTP:** preserve as proteções nativas e defina explicitamente endpoints,
-   cookies, DTOs, CSRF de comandos e logging conforme a aplicação.
+1. **Persistence:** observe the actual write order and boundary. Do not equate
+   `db.transaction()` with `D1.batch()` or enable unsupported interactive transactions.
+2. **Identity:** deliberately choose the linking policy. Verified email
+   proves current control of the address, not historical identity or an access grant.
+3. **OAuth:** verify browser/transaction binding, state integrity, PKCE,
+   and single-use codes separately. An atomic adapter primitive only protects
+   the flow that actually calls it.
+4. **Session/HTTP:** preserve native protections and explicitly define endpoints,
+   cookies, DTOs, command CSRF protection, and logging for the application.
 
-Leia [OAuth e segurança](references/oauth-and-security.md) para essas fronteiras.
-Uma reserva durável por code é uma composição possível quando necessária e
-suportada pela release; não instale um plugin preventivamente nem copie o core.
+Read [OAuth and security](references/oauth-and-security.md) for these boundaries.
+A durable per-code reservation is one possible composition when necessary and
+supported by the release; do not install a plugin preemptively or copy the core.
 
-## Prove antes de aceitar
+## Prove before accepting
 
-Use Better Auth, adapter e D1 reais no runtime Workers. Controle HTTP do provider
-externo e injete falhas de persistência explicitamente; não simule o adapter ou
-seu algoritmo para declarar a integração aprovada. Faça um teste focado falhar
-pela causa investigada antes de corrigir comportamento.
+Use real Better Auth, the adapter, and D1 in the Workers runtime. Control the
+external provider's HTTP and explicitly inject persistence failures; do not fake
+the adapter or its algorithm to declare the integration approved. Make a focused
+test fail for the investigated cause before correcting behavior.
 
-Selecione os cenários pertinentes em
-[matriz de testes e evidência](references/test-matrix-and-evidence.md): falhas em
-User/Account/Session, novo OAuth, linking positivo/negativo, callbacks concorrentes,
-replay com novo state, PKCE/downgrade, cookies, exposição de tokens e limites da
-reserva, quando adotada. Conte token requests por code, além de observar sessão
-e linhas persistidas. Reexecute a composição final e preserve gates existentes.
+Select relevant scenarios from the
+[test matrix and evidence](references/test-matrix-and-evidence.md): failures in
+User/Account/Session, a new OAuth flow, positive/negative linking, concurrent callbacks,
+replay with new state, PKCE/downgrade, cookies, token exposure, and reservation
+boundaries when adopted. Count token requests per code alongside observing sessions
+and persisted rows. Rerun the final composition and preserve existing gates.
 
-Distinga teste local, tipo/build/dry-run e integração remota. Duas instâncias auth
-no mesmo isolate demonstram concorrência nessa composição; não provam failover
-regional. Uma fixture que rejeita downgrade não prova enforcement no provider
-real. Não declare um crash físico a partir de uma exceção simulada.
+Distinguish local tests, type/build/dry-run checks, and remote integration. Two auth
+instances in the same isolate demonstrate concurrency in that composition; they do not
+prove regional failover. A fixture that rejects downgrade does not prove enforcement
+by the real provider. Do not claim a physical crash from a simulated exception.
 
-## Corrija a causa sem mudar a política silenciosamente
+## Fix the cause without silently changing policy
 
-Prefira configuração/API pública suportada ou release oficial qualificada.
-Não altere linking, verificação de email, origem/redirect ou storage apenas para
-obter testes verdes. Não substitua schema, adapter ou `transaction: true` por
-suposição. Não reabra uma credencial após resultado externo incerto.
+Prefer supported public configuration/APIs or a qualified official release.
+Do not change linking, email verification, origin/redirect, or storage merely
+to make tests pass. Do not replace the schema, adapter, or `transaction: true`
+based on assumptions. Do not reopen a credential after an uncertain external outcome.
 
-Se uma garantia essencial continua falhando, registre a causa e a alternativa
-suportada; não marque a integração como pronta. Um baseline diagnóstico pode
-reproduzir o defeito, mas os asserts de aceite devem continuar normais e integrar
-os testes/CI após a composição ser aprovada. Não usar `it.fails`, skips ou
-exclusões de cobertura para liberar o comportamento desejado.
+If an essential guarantee still fails, record the cause and supported alternative;
+do not mark the integration ready. A diagnostic baseline can reproduce the defect,
+but acceptance assertions must remain ordinary assertions and join the tests/CI
+once the composition is approved. Do not use `it.fails`, skips, or coverage
+exclusions to approve the desired behavior.
 
-## Entregue evidência útil
+## Deliver useful evidence
 
-Registre configuração/versões, contrato, cenário, oráculo, primeira falha,
-comando e resultado, limites e próximo gate. Relacione as fontes primárias de
-[referência](references/sources.md) à afirmação que sustentam. Atualize os docs
-operacionais quando a solução adicionar persistência, retenção ou manutenção.
+Record configuration/versions, contract, scenario, oracle, first failure,
+command and result, limitations, and the next gate. Associate the primary
+[reference sources](references/sources.md) with the claims they support. Update
+operational docs when the solution adds persistence, retention, or maintenance.
 
-Siga as autorizações do pedido: investigar ou adicionar código não autoriza
-criar OAuth Apps, secrets, banco remoto, migration, deploy ou enviar mensagens.
-Use credenciais/identidades sintéticas em fixtures e nunca publique dados reais.
+Follow the request's authorization: investigating or adding code does not authorize
+creating OAuth Apps, secrets, a remote database, migrations, deployment, or sending messages.
+Use synthetic credentials/identities in fixtures and never publish real data.
