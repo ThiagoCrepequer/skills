@@ -1,0 +1,4 @@
+interface:
+  display_name: "Better Auth + D1"
+  short_description: "Autenticação D1/Drizzle com provas de segurança"
+  default_prompt: "Use $better-auth-d1 para implementar ou revisar autenticação Better Auth no D1 com Drizzle e comprovar recuperação, concorrência e segurança."
