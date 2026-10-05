@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Test Quality"
+  short_description: "Behavior-first React and JavaScript test engineering"
+  default_prompt: "Use $react-test-quality to design, write, or review trustworthy React and JavaScript tests for this change."
