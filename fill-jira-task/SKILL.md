@@ -1,6 +1,6 @@
 ---
 name: fill-jira-task
-description: Fill or reconcile Jira issue metadata using the available MCP, authenticated CLI, or configured API. Select an existing epic, fill an empty assignee with the verified acting user, calibrate story points on the 1/3/5/8 scale, preserve and improve task-focused descriptions, and record supplied review findings. Use for Jira task enrichment directly or as the Jira specialist called by finish-task. Does not perform Git operations, open PRs, review code, or transition issue status.
+description: Fill or reconcile Jira issue metadata using the available MCP, authenticated CLI, or configured API. Select an existing epic for the system area the task touches, fill an empty assignee with the verified acting user, calibrate story points on the 1/3/5/8 scale, preserve and improve task-focused descriptions, and record supplied review findings. Use for Jira task enrichment directly or as the Jira specialist called by finish-task. Does not perform Git operations, open PRs, review code, or transition issue status.
 license: MIT
 ---
 
@@ -8,7 +8,7 @@ license: MIT
 
 Own Jira context retrieval and task-field reconciliation. Work directly from a user's request or from a caller such as `finish-task`; no repository, PR, or code review is required for a standalone metadata request. Preserve existing reports and requirements, and verify actual persisted changes.
 
-Follow the issue/user's language. Read the available Jira connection's schema and any applicable project guidance. Load [references/jira-updates.md](references/jira-updates.md) for connection discovery, supported fields, hierarchy, identity, concurrency, and comments. Load [references/estimation-and-description.md](references/estimation-and-description.md) when assessing points or descriptions. These references belong to this skill; callers should use this entrypoint rather than reproduce the field policies.
+Follow the issue/user's language. Read the available Jira connection's schema and any applicable project guidance. Load [references/jira-updates.md](references/jira-updates.md) for connection discovery, supported fields, hierarchy, identity, concurrency, and comments. Load [references/estimation-and-description.md](references/estimation-and-description.md) when assessing points or descriptions. Load [references/epicos-ns.md](references/epicos-ns.md) when choosing an epic; it is one project's area mapping, not a universal catalog. These references belong to this skill; callers should use this entrypoint rather than reproduce the field policies.
 
 ## Resolve the issue and choose the operation
 
@@ -42,7 +42,7 @@ Re-read relevant issue content before writing. If requirements changed, or refre
 
 Build a compact current/proposed/reason/editability plan and apply only changes justified by the actual issue context. A complete field may need no update.
 
-- **Parent / epic:** inspect existing candidates and choose by business scope. Keep a fitting parent and valid subtask hierarchy. Report unresolved ambiguity. **Never create an epic** or edit a parent issue merely to categorize a subtask.
+- **Parent / epic:** the parent epic is the system area the task touches. Pick the existing epic for the affected area, never a generic bucket or a domain concept. Keep a fitting parent and valid subtask hierarchy. Report unresolved ambiguity. **Never create an epic** or edit a parent issue merely to categorize a subtask. List the project's open epics with JQL (`issuetype = Epic`) when a saved list may be outdated. See [references/epicos-ns.md](references/epicos-ns.md).
 - **Assignee:** preserve any existing assignee. Only fill an empty field with the verified authenticated actor or explicitly identified acting user, after checking assignability. Do not infer a human from Git author, reporter, or token ownership guesses.
 - **Story points:** discover the applicable numeric field for this project/type/board. Use **1 / 3 / 5 / 8**, comparing actual historical task scope, coupling, criticality, uncertainty, and validation. Keep a justified existing estimate; explain any supported correction. Do not invent field IDs, write every similarly named field, or convert points to hours.
 - **Description:** leave complete, accurate text unchanged. Create or narrowly correct incomplete/inaccurate text using flexible, task-focused context, goals, behavior, and acceptance conditions. Preserve reports, relevant details, decisions, links, and original requirements. Deep implementation/test logs belong in supplied PRs or existing technical records. Missing implementation cannot be hidden by removing a requirement.
