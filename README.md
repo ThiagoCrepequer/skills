@@ -4,6 +4,7 @@ Reusable agent skills for evidence-led software engineering.
 
 ## Available skills
 
+- [solution-quality](solution-quality/SKILL.md): guide implementation toward the underlying problem, compare legitimate solutions with harmful shortcuts, and validate changes with effort proportional to risk.
 - [better-auth-d1](better-auth-d1/SKILL.md): implement and qualify Better Auth authentication on Cloudflare D1 with Drizzle, using persistence, OAuth recovery, concurrency, and security evidence.
 - [query-performance-workflow](query-performance-workflow/SKILL.md): investigate expensive application queries, preserve behavior with regression tests, capture ORM SQL, and validate optimization with representative execution plans.
 - [react-test-quality](react-test-quality/SKILL.md): design, write, strengthen, and review trustworthy React and JavaScript/TypeScript tests.
@@ -26,6 +27,7 @@ Install a specific skill:
 
 ```bash
 npx skills add ThiagoCrepequer/skills --skill better-auth-d1
+npx skills add ThiagoCrepequer/skills --skill solution-quality
 npx skills add ThiagoCrepequer/skills --skill react-test-quality
 npx skills add ThiagoCrepequer/skills --skill java-test-quality
 npx skills add ThiagoCrepequer/skills --skill fill-jira-task
@@ -41,6 +43,8 @@ npx skills add ThiagoCrepequer/skills --skill finish-task fill-jira-task
 ```
 
 See the individual skill READMEs for usage examples. The migrated test-quality skills include their original MIT licenses in their respective directories.
+
+Use `$solution-quality` while implementing a feature, fixing a defect, or evaluating a workaround. It is self-contained and complements specialist and delivery workflows without requiring them. Its [decision examples](solution-quality/references/decision-examples.md) compare retries, fallbacks, caching, timeouts, concurrency, asynchronous UI, data validation, adapters, query optimization, abstraction, test integrity, and incident mitigation. Read only the examples relevant to the current decision.
 
 ## Authoring language
 
