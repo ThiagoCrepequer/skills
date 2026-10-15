@@ -1,6 +1,6 @@
 # Fill Jira Task
 
-Fill and reconcile Jira task information through the available MCP, authenticated CLI, or configured API connection. This skill owns epic selection, empty-assignee resolution, story-point calibration, task-focused descriptions, and supplied pending-findings comments.
+Fill and reconcile Jira task information through the available MCP, authenticated CLI, or configured API connection. This skill owns epic selection by system area, empty-assignee resolution, story-point calibration, task-focused descriptions, and supplied pending-findings comments. The parent epic is the area the task touches, never a generic bucket or a domain concept. The NS list in the references is an example; list the project's open epics with JQL (`issuetype = Epic`) when that list may be outdated.
 
 ```bash
 npx skills add ThiagoCrepequer/skills --skill fill-jira-task
@@ -20,6 +20,6 @@ To install the composed workflow:
 npx skills add ThiagoCrepequer/skills --skill finish-task fill-jira-task
 ```
 
-The entrypoint is [SKILL.md](SKILL.md). Supporting references cover [Jira operations and comments](references/jira-updates.md) and [estimation and descriptions](references/estimation-and-description.md).
+The entrypoint is [SKILL.md](SKILL.md). Supporting references cover [Jira operations and comments](references/jira-updates.md), [estimation and descriptions](references/estimation-and-description.md), and an [example area-epic mapping](references/epicos-ns.md).
 
 Licensed under [MIT](LICENSE).

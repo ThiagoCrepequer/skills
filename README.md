@@ -9,9 +9,10 @@ Reusable agent skills for evidence-led software engineering.
 - [react-test-quality](react-test-quality/SKILL.md): design, write, strengthen, and review trustworthy React and JavaScript/TypeScript tests.
 - [java-test-quality](java-test-quality/SKILL.md): design, write, strengthen, and review trustworthy Java and Quarkus tests.
 - [finish-task](finish-task/SKILL.md): finalize task commits, PRs, and spec/standards review, delegating Jira operations to `fill-jira-task`.
-- [fill-jira-task](fill-jira-task/SKILL.md): fill Jira epic, assignee, story points, and task descriptions, preserve reports/requirements, and record supplied review findings.
+- [fill-jira-task](fill-jira-task/SKILL.md): fill Jira epic by system area, assignee, story points, and task descriptions, preserve reports/requirements, and record supplied review findings.
+- [sentry-fix-workflow](sentry-fix-workflow/SKILL.md): orchestrate a simple Sentry defect through root cause, a failing test, Jira, and a pull request by delegating to `tdd`, the test-quality skills, `fill-jira-task`, and `finish-task`.
 
-Each skill keeps its instructions and supporting references in its own directory. Add the directory to your agent's supported skill location and invoke it by name, for example `$query-performance-workflow` in Codex. Supporting references are loaded only when relevant. `finish-task` composes with the required `fill-jira-task` companion; install both for the complete finalization workflow. `fill-jira-task` can also run independently.
+Each skill keeps its instructions and supporting references in its own directory. Add the directory to your agent's supported skill location and invoke it by name, for example `$query-performance-workflow` in Codex. Supporting references are loaded only when relevant. `finish-task` composes with the required `fill-jira-task` companion; install both for the complete finalization workflow. `fill-jira-task` can also run independently. `sentry-fix-workflow` is an orchestrator: it loads `tdd`, `java-test-quality` or `react-test-quality`, `fill-jira-task`, and `finish-task` instead of repeating them.
 
 ## Installation
 
@@ -28,7 +29,10 @@ npx skills add ThiagoCrepequer/skills --skill better-auth-d1
 npx skills add ThiagoCrepequer/skills --skill react-test-quality
 npx skills add ThiagoCrepequer/skills --skill java-test-quality
 npx skills add ThiagoCrepequer/skills --skill fill-jira-task
+npx skills add ThiagoCrepequer/skills --skill sentry-fix-workflow
 ```
+
+`tdd`, used by `sentry-fix-workflow`, is installed from its own repository: `npx skills add https://github.com/mattpocock/skills --skill tdd`.
 
 Install the complete finalization workflow:
 

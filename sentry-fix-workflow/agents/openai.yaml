@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sentry Fix Workflow"
+  short_description: "Orchestrate a simple Sentry fix through test, Jira, and PR"
+  default_prompt: "Use $sentry-fix-workflow to investigate this Sentry issue and, when the fix is simple, take it through a failing test, Jira, and a pull request."
