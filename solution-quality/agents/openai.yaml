@@ -1,0 +1,4 @@
+interface:
+  display_name: "Solution Quality"
+  short_description: "Solve underlying problems with proportionate evidence"
+  default_prompt: "Use $solution-quality to implement this change, address the underlying problem, and verify the result without unnecessary complexity."
