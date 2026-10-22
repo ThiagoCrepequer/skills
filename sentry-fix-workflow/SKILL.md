@@ -42,7 +42,11 @@ Stop before any code change when the event is not a defect to fix in application
 
 - an expected client error the product already handles, such as a 4xx business response for validation, permission, or not-found;
 - a disabled or intentionally noisy performance or transaction detector;
-- another expected operational error the project already treats as non-actionable.
+- another expected operational error the project already treats as non-actionable;
+- an event from a non-production environment, such as a developer's local build with hot-reload frames, or from a work-in-progress branch that is not released;
+- an error raised by code the application does not own or by a stale client, such as an in-app browser or WebView bridge script, a browser extension, or a failed dynamic import of an asset removed by a newer deploy.
+
+Check the environment, release, URL, and top frames before applying a filter, and confirm the error does not also occur in the released build. Recurring stale-asset errors after every deploy can point to a missing reload-on-chunk-error guard; report that as a separate improvement instead of a defect fix.
 
 Report the issue and suggest an ignore or filter rule in Sentry. Do not change application code to silence it.
 
