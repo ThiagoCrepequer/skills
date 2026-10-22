@@ -118,9 +118,23 @@ New commits invalidate the previous `finish-task` verdict. Run that review gate 
 
 Resolving a bot thread is not human approval. Human reviewers are still required.
 
+## Manual QA on a local stack
+
+After the automated review loop has no valid open finding, exercise the change by hand on a local environment before step 8.
+
+- Use a stack that runs entirely on the local machine. Never point QA at production or shared infrastructure, and never send data from it outside the machine.
+- Apply the pull request head (or its diff) to the local checkouts, rebuild the affected services, and confirm they start without new errors.
+- Walk the user-visible flows the fix touches, plus the neighboring flows that share the same component or endpoint. Cover the original failing scenario, the normal path, and the edge cases found in step 2 (empty data, missing records, boundary values).
+- Watch the browser console, network requests, and server logs during the run. A new error, a wrong request, or a visual regression is a finding.
+- Treat QA findings like valid review findings: reproduce with a failing test using `tdd`, fix, push, and rerun the review loop and the `finish-task` gate. A finding that needs a business-rule decision is a stop condition.
+- Separate environment artifacts (missing licenses, seed data, local configuration) from defects, and say which is which.
+- Clean up any test data created during QA, and do not attach screenshots or logs that expose personal or sensitive data.
+
+If no local stack can run the change, report manual QA as pending instead of claiming it passed.
+
 ## 8. Link, resolve in the next release, and move the issue
 
-Do this only after the pull request exists, `finish-task` did not stop, and the automated review loop has no valid open finding.
+Do this only after the pull request exists, `finish-task` did not stop, the automated review loop has no valid open finding, and manual QA passed.
 
 - Link the pull request on the Jira issue.
 - Comment on the Sentry issue with the pull request URL and `Fixes <SENTRY-SHORT-ID>`. Mark the Sentry issue resolved in the next release when the connection supports that resolution.
@@ -137,7 +151,8 @@ Report and stop, instead of continuing, when any of these is true:
 - the fix requires a business-rule decision;
 - the error cannot be reproduced;
 - the change is too large for one task;
-- `finish-task` returns **BLOCKED**, or it stops because the gate is incomplete or unverified.
+- `finish-task` returns **BLOCKED**, or it stops because the gate is incomplete or unverified;
+- manual QA found a regression that needs a business-rule decision.
 
 A stop is a report, not a partial silent fix. Include the evidence already gathered and the decision that is still open. When a pull request already exists, still process automated-reviewer threads in the review loop, then run the `finish-task` gate again if that loop pushed commits. Do not move the Jira issue while the latest gate is **BLOCKED** or incomplete.
 
@@ -150,6 +165,7 @@ Sentry issue: <short id and link>
 Root cause: <origin of the defect>
 Difficulty: simple | medium | hard — <reason>
 Test: <seam and red/green result, or not written>
+Manual QA: <flows checked and result, or pending>
 Pull request: <url or not opened>
 Jira: <key or not created>
 Status: <current status, or not transitioned>
