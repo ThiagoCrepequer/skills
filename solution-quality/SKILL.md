@@ -1,58 +1,80 @@
 ---
 name: solution-quality
-description: Guide implementation, bug fixes, and refactoring toward evidence-backed solutions that address the underlying problem, preserve relevant contracts, and keep complexity proportional to the task. Use when choosing or implementing a technical approach, investigating a defect, or assessing a proposed workaround. Does not own release, Jira, or PR workflows.
+description: Guide implementation, architecture, bug fixes, and refactoring toward evidence-backed, testable-by-construction code that addresses the underlying problem, preserves contracts, and keeps complexity proportional to the task. Use when defining what high-quality code is, choosing design patterns vs. avoiding anti-patterns, separating pure domain logic from I/O, designing deep module interfaces, investigating defects, or assessing workarounds. Does not own release, Jira, or PR workflows.
+license: MIT
 ---
 
 # Solution Quality
 
-Choose the simplest solution that satisfies the actual requirement, addresses the demonstrated cause, and has evidence proportional to its risk. Optimize for correctness and maintainability under the task's constraints, not the smallest diff or an imagined perfect architecture.
+Choose the simplest design that satisfies the actual requirement, addresses the demonstrated cause, makes invalid states difficult or impossible to represent, and is testable by construction with evidence proportional to its risk. Optimize for **leverage, locality, correctness, and maintainability** under the task's constraints—not the smallest diff, an arbitrary line-count rule, or an imagined universal framework.
 
 ## Apply proportionately
 
-Read applicable repository instructions and reuse evidence already established in the task. Respect the user's scope and authorization. This skill complements an active workflow; it does not restart its steps, duplicate its gates, or grant permission to publish or operate production systems.
+Read applicable repository instructions and reuse evidence already established in the task. Respect the user's scope and authorization. This skill complements an active workflow (and pairs directly with `test-quality` and `tdd`); it does not restart its steps, duplicate its gates, or grant permission to publish or operate production systems.
 
-- For a clear, localized change, inspect the relevant contract, implement it, and run focused checks. No formal plan, alternative count, research quota, or separate report is required.
-- Investigate more deeply when behavior is unclear, evidence conflicts, or the change affects shared contracts, concurrency, security, data integrity, or operational limits. File count alone does not determine risk.
-- Read only the matching cases in [decision examples](references/decision-examples.md) when deciding whether a retry, fallback, cache, adapter, refactor, or mitigation is justified. These are conditional examples, not mandatory patterns.
+- For a clear, localized change, inspect the relevant contract, implement it cleanly at the owning seam, and run focused checks. No formal plan, alternative count, research quota, or separate report is required.
+- Investigate more deeply when behavior is unclear, evidence conflicts, or the change affects shared contracts, concurrency, security, data integrity, multi-step transactions, or operational limits. File count alone does not determine risk.
+- Read only the matching cases in [references/decision-examples.md](references/decision-examples.md) when deciding whether a retry, fallback, cache, adapter, refactor, transaction boundary, or mitigation is justified.
+- Read [references/code-design-and-patterns.md](references/code-design-and-patterns.md) when structuring modules, untangling mixed business/I/O logic, choosing design patterns by problem pressure, or auditing implementation anti-patterns.
+
+## Define high-quality code (the five structural properties)
+
+Quality is not adherence to a rigid catalog of GoF templates; it is the presence of five structural properties that keep software adaptable and testable across any stack:
+
+1. **Deep modules over shallow wrappers (High Leverage, High Locality):**
+   A good module hides complex mechanics and enforces invariants (such as tenant isolation, safe pagination, or transaction scoping) behind a small, intuitive interface. Callers gain **leverage** (much capability per unit of interface learned) and maintainers gain **locality** (invariants live in one place, not copy-pasted across $N$ callers). Apply the **deletion test**: if removing an abstraction makes the system simpler, it was a shallow pass-through; if removing it forces $N$ callers to repeat complex guards, it is earning its keep.
+2. **Functional Core, Imperative Shell (Testable by Construction):**
+   Separate *deciding what should happen* from *executing I/O and side effects*. Keep complex branching, state-machine precedence, recurrence/schedule math, layout geometry, and diffing inside pure, deterministic functions over plain data structures (**Functional Core**). Keep HTTP handlers, database queries, and UI components as thin orchestrators that load state, invoke the pure core, and persist or render results (**Imperative Shell**). When a behavior requires ten mocks to test, treat that friction as a design smell: extract the decision core.
+3. **Parse, don't validate (Make Illegal States Unrepresentable):**
+   Validate and normalize raw inputs once at the system boundary (seam), transforming untrusted primitives, strings, or loose maps into canonical, strongly typed domain structures. Do not pass raw composite strings (`"${id}_${timestamp}"`), unparsed JSON text, or ambiguous optional flags deep into services where every caller must defensively split strings or `try { JSON.parse }`. Model independent facts independently (e.g., separate lifecycle timestamps rather than a single overwritten status string).
+4. **Atomicity and single source of truth:**
+   Multi-step mutations that belong to one business operation must share a single transactional boundary (`Unit of Work`). Never leave half-updated state when step 2 of 3 fails, and never maintain parallel columns or client/server caches that silently drift without a defined reconciliation rule.
+5. **Truthful failure over compensating cascades:**
+   Enforce preconditions at their owning boundary and fail explicitly with structured domain errors (`code`, `status`, typed exception) when required invariants or dependencies fail. Never swallow errors to return fabricated domain data (e.g., hardcoded fake users/items when an API call fails), and never branch on human-readable error message substrings (`err.message.includes(...)`) to drive control flow.
 
 ## Establish the problem and its owner
 
-Identify the observable outcome, the affected inputs and users, and the contracts that must remain true. For a feature, establish its acceptance behavior and integration points. For a defect, distinguish the symptom, the suspected mechanism, and the evidence connecting them.
+Identify the observable outcome, the affected inputs and users, and the contracts that must remain true. For a feature, establish its acceptance behavior and integration seams. For a defect, distinguish the symptom, the suspected mechanism, and the evidence connecting them.
 
-Trace the relevant path from input through the responsible component to the failure. A stack trace identifies where an error surfaced; it does not by itself identify where it originated. Fix a bad producer while retaining necessary validation at trust boundaries. Do not broaden the investigation to unrelated parts of the system.
+Trace the relevant path from input through the responsible module to the failure. A stack trace identifies where an error surfaced; it does not by itself identify where it originated. Fix a bad producer at its boundary while retaining necessary validation at trust boundaries. Do not broaden the investigation to unrelated parts of the system.
 
-Reproduce the defect when practical. Otherwise, use targeted inspection, controlled experiments, or existing telemetry to test a specific hypothesis. Label uncertainty; do not invent a root cause. When an attempted fix fails, revisit the hypothesis before adding another compensating patch. Keep unrelated findings separate.
+Reproduce the defect when practical. Otherwise, use targeted inspection, controlled experiments, or existing telemetry to test a specific hypothesis. Label uncertainty; do not invent a root cause. When an attempted fix fails, revisit the hypothesis before adding another compensating patch.
 
 ## Resolve uncertainty with useful resources
 
-Start with the owning code, callers, tests, configuration, installed versions, and project decisions. Consult relevant available skills and documentation when they can change the implementation or verification. For version-sensitive APIs, unfamiliar behavior, or external defects, verify against official documentation, source, release notes, or a reproducible upstream issue for the actual version. Use web search to locate that evidence; a search snippet is not sufficient support.
+Start with the owning code, callers, tests, configuration, installed versions, and project decisions (`GLOSSARY.md`, ADRs). Consult relevant available skills and documentation when they can change the implementation or verification. For version-sensitive APIs, unfamiliar behavior, or external defects, verify against official documentation, source, release notes, or a reproducible upstream issue for the actual version.
 
-Form a concrete question before a lookup and stop researching once the material uncertainty is resolved. Do not browse, load every skill, introduce tools, or install dependencies simply to demonstrate diligence. If a resource is unavailable, use adequate alternatives and state remaining uncertainty. Missing optional guidance is not a blocker; preserve mandatory dependencies of the workflow already in use. Keep confidential data out of external searches.
+Form a concrete question before a lookup and stop researching once the material uncertainty is resolved. Do not browse, load every skill, introduce tools, or install dependencies simply to demonstrate diligence. Keep confidential data out of external searches.
 
-## Choose and implement the appropriate solution
+## Choose patterns by problem pressure, never by speculation
 
-Compare alternatives only when a consequential tradeoff exists. Prefer supported capabilities and established project seams when they fit. A larger cohesive fix can be simpler than several local exceptions; a small direct implementation can be better than a general framework.
+Compare alternatives only when a consequential tradeoff exists. Prefer supported capabilities and established project seams when they fit. Apply patterns only when a concrete structural pressure demands them (see [references/code-design-and-patterns.md](references/code-design-and-patterns.md)):
 
-Evaluate the relevant effects: contract correctness, compatibility, ownership, operational cost, testability, and future maintenance. Do not sacrifice a required invariant for a smaller diff or a faster benchmark. Do not preserve a known defective pattern merely for consistency. Explain meaningful departures from conventions.
+- **Pure Policy / Calculator Function:** when branching, math, or state derivation grows complex inside an I/O handler or UI component.
+- **Port & Adapter (Seam):** when a boundary must genuinely vary (e.g., production external service vs. deterministic test fake). **One adapter means a hypothetical seam; two adapters mean a real one.** Never create single-implementation interfaces just for ceremony.
+- **Scoped Context / Boundary Wrapper:** when an invariant (auth, tenant scope, tracing, transaction) must apply compulsorily without threading context parameters (`db`, `orgId`, `userId`) through every function signature (*Context Plumbing*).
+- **State / Query Factory:** when 2+ workflows share the exact same state machine or invariant (e.g., server-side pagination, tri-state sorting, filter reset), whereas superficially similar code with different business policies should stay separate.
+- **Batch Loader / Projection (`WHERE id IN (...)` / `JOIN`):** when enriches or link checks would otherwise issue $N+1$ queries inside loops.
 
-Keep rules at their responsible boundary and make invalid states and failures explicit. Avoid speculative abstractions, duplicate sources of truth, unrelated refactors, and configuration added only for hypothetical needs. Refactor when the scoped change demonstrably needs it; include affected callers and tests.
+## Never deform production code to appease weak test doubles
 
-Treat retries, sleeps, caches, defaults, type assertions, suppressions, and adapters as prompts to examine intent, not automatic violations. Reject uses that hide a broken contract or bypass a required check. Do not swallow unexpected failures, fabricate successful results, weaken authorization, or change test expectations solely to accept a regression. If the intended contract legitimately changes, update its tests with evidence of that requirement.
+High-quality implementation and high-quality testing (`test-quality`) must never undermine each other:
+
+- **No test-only backdoors in production:** Never add `if (!db) return fakeSuccess` or silent no-ops in production services merely so under-configured unit tests can pass without providing required dependencies.
+- **No in-memory full-table scans to work around mock limitations:** Never replace SQL `WHERE`, `JOIN`, `GROUP BY`, or `ORDER BY` operations with unbounded `findMany()` table dumps and JavaScript `.filter()` / `.slice()` loops just because a hand-rolled test mock cannot parse SQL expressions. Upgrade the test harness (or test against a real embedded/containerized database) and keep production queries bounded and index-friendly.
 
 ## Distinguish durable solutions from temporary mitigation
 
-A compatibility boundary or resilience mechanism can be a permanent design choice. A temporary workaround needs an evidenced constraint that prevents the direct fix, an isolated implementation, meaningful validation, and a concrete removal condition. Record that rationale near the code or in the existing task/PR; do not require a new tracking system.
+A compatibility boundary or resilience mechanism can be a permanent design choice. A temporary workaround needs an evidenced constraint that prevents the direct fix, an isolated implementation at the boundary, meaningful validation, and a concrete removal condition. Record that rationale near the code or in the existing task/PR.
 
-Check supported configuration or an upgrade before maintaining a workaround, including compatibility and migration costs. Do not assume the latest release is safe or necessary. If restoring service urgently is within scope, a bounded mitigation may precede diagnosis; state what it restores, what remains unresolved, and how to verify and reverse it. Do not claim that mitigation proves the cause is fixed.
-
-Ask only when a missing product decision, material scope expansion, or additional permission is necessary. Present the evidence and recommendation, and continue independent authorized work. Routine engineering choices need no new approval.
+If restoring service urgently is within scope, a bounded mitigation may precede diagnosis; state what it restores, what remains unresolved, and how to verify and reverse it. Do not claim that mitigation proves the cause is fixed.
 
 ## Verify and finish
 
-Choose checks that could expose the original failure or invalidate the solution. For a reproducible bug, prefer a regression that fails before the fix and passes afterward for the expected reason. Reuse sufficient existing coverage. Do not impose new tests on trivial changes merely to satisfy a ritual.
+Choose checks that could expose the original failure or invalidate the solution (and apply `test-quality` standards when writing or updating tests):
 
-Exercise the real mechanism when it matters: database constraints for concurrent persistence, controlled response order for asynchronous UI, generated SQL for ORM behavior, and representative measurements for performance. Mocks, compilation, or a passing happy path alone do not establish those properties. Run required repository checks and focused adjacent regressions; broaden validation when new risks or failures justify it.
+- Exercise the real mechanism when it matters: database constraints and transactions for persistence invariants, generated SQL and batch counts for query behavior, and controlled response order for asynchronous UI.
+- Verify both the positive contract (expected return/state) and negative invariants (sibling fields preserved on partial `PATCH` updates, no cross-tenant leakage, no partial writes on failure).
+- Inspect the final diff for hidden behavior changes, redundant compensations, `N+1` query loops, and unnecessary complexity.
 
-Inspect the final diff for hidden behavior changes, redundant compensations, and unnecessary complexity. Finish when the scoped outcome and relevant invariants have sufficient evidence and required checks are satisfied. Do not keep searching for marginal improvements. When evidence or access is insufficient, identify the precise limitation and safe next step instead of claiming success or blocking unrelated work.
-
-Report the result, the decisive rationale, verification actually performed, and material remaining limits in the user's language. Keep the explanation proportional; reuse the active workflow's report instead of producing a second checklist.
+Report the result, the decisive rationale, verification actually performed, and material remaining limits in the user's language.
