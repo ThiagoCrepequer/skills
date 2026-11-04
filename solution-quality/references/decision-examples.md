@@ -16,6 +16,11 @@ These are constructed engineering scenarios, not reports of production fixes. Th
 - [Abstraction with a demonstrated responsibility](#abstraction-with-a-demonstrated-responsibility)
 - [Unexpected failures and misleading green tests](#unexpected-failures-and-misleading-green-tests)
 - [Urgent mitigation with an explicit limit](#urgent-mitigation-with-an-explicit-limit)
+- [Mixed decision logic and I/O versus Functional Core extraction](#mixed-decision-logic-and-io-versus-functional-core-extraction)
+- [Context plumbing and manual guards versus a deep boundary module](#context-plumbing-and-manual-guards-versus-a-deep-boundary-module)
+- [Stringly-typed composite state and error-message matching versus Parse, don't validate](#stringly-typed-composite-state-and-error-message-matching-versus-parse-dont-validate)
+- [Production backdoors and full-table scans written to appease weak test doubles](#production-backdoors-and-full-table-scans-written-to-appease-weak-test-doubles)
+- [Multi-step mutations and partial updates across transaction boundaries](#multi-step-mutations-and-partial-updates-across-transaction-boundaries)
 
 ## Retry after an uncertain remote outcome
 
@@ -33,13 +38,13 @@ These are constructed engineering scenarios, not reports of production fixes. Th
 
 **Context.** Product requirements allow an optional recommendation panel to disappear when its service is unavailable. Order submission must still report its real outcome.
 
-**Tempting shortcut.** Use a shared catch-all handler that converts all service errors into empty data or a successful response.
+**Tempting shortcut.** Use a shared catch-all handler that converts all service errors into empty data, hardcoded sample entities, or a successful response.
 
-**Legitimate solution.** Confine degradation to the optional panel: show the agreed unavailable state, keep failure evidence in appropriate telemetry, and leave the rest of the page usable. Keep an empty successful result distinguishable from failed loading where that distinction affects the user. For order submission, expose failure or uncertain completion and a safe recovery path.
+**Legitimate solution.** Confine degradation to the optional panel: show the agreed unavailable state, keep failure evidence in appropriate telemetry, and leave the rest of the page usable. Keep an empty successful result distinguishable from failed loading where that distinction affects the user. Never fabricate fictional domain entities (such as sample customers, providers, or synthetic fallback IDs) when a required resource query fails, as downstream mutations will fail or require compensating hacks when those fake IDs are submitted. For order submission, expose failure or uncertain completion and a safe recovery path.
 
-**Evidence.** Exercise empty results, service failure, recovery, and successful recommendations. Separately fail order submission and verify it never displays a false confirmation. Verify diagnostics remain available without logging sensitive payloads.
+**Evidence.** Exercise empty results, service failure, recovery, and successful recommendations. Separately fail order submission and verify it never displays a false confirmation or populates fake domain records. Verify diagnostics remain available without logging sensitive payloads.
 
-**Boundary.** A fallback is valid because the product permits that degraded behavior. Never infer permission to substitute estimated prices, clinical values, or authorization decisions merely because a default keeps the screen working. Ask about the unresolved behavior only when existing requirements do not answer it.
+**Boundary.** A fallback is valid because the product permits that degraded behavior. Never infer permission to substitute estimated prices, clinical values, fictional records, or authorization decisions merely because a default keeps the screen working. Ask about the unresolved behavior only when existing requirements do not answer it.
 
 ## Cache with a defined freshness contract
 
@@ -119,7 +124,7 @@ These are constructed engineering scenarios, not reports of production fixes. Th
 
 **Tempting shortcut.** Cache the endpoint, load the entire dataset into memory, or add an unrestricted join and deduplicate results after pagination.
 
-**Legitimate solution.** Capture the actual generated SQL and attribute the repeated work. Choose a supported projection, batch load, or equivalent query strategy that addresses the measured cause while preserving filtering, cardinality, ordering, pagination, and transaction boundaries. A join is appropriate only when its row multiplication and pagination semantics are accounted for.
+**Legitimate solution.** Capture the actual generated SQL and attribute the repeated work. Choose a supported projection, batch load (`WHERE id IN (...)`), or equivalent query strategy that addresses the measured cause while preserving filtering, cardinality, ordering, pagination, and transaction boundaries. A join is appropriate only when its row multiplication and pagination semantics are accounted for.
 
 **Evidence.** Compare ordinary, empty, and high-cardinality cases, including multiple children per parent, sort ties, and unauthorized records. Verify the generated SQL, result/count equivalence, and work performed under representative parameters. A faster handwritten query alone does not establish application improvement.
 
@@ -160,3 +165,63 @@ These are constructed engineering scenarios, not reports of production fixes. Th
 **Evidence.** Observe worker/resource recovery and core request success, confirm the feature state and its user-facing behavior, and preserve the remaining uncertainty. Later, validate the permanent fix under the triggering workload before claiming resolution.
 
 **Boundary.** Restoring service does not prove a root cause. Rollback requires compatible data and deployment state; a feature flag may leave queued work running. Check those conditions. This example does not grant production permissions or require complete diagnosis before an authorized emergency mitigation.
+
+## Mixed decision logic and I/O versus Functional Core extraction
+
+**Context.** A scheduling service method has grown to 180 lines: it queries several database tables, parses recurrence strings with inline `.split(";")` manipulations, computes overlapping intervals, and executes multiple updates. Testing any edge case requires mocking half the database layer.
+
+**Tempting shortcut.** Write an elaborate web of ORM mocks for each branch, or split the 180-line method into three private methods on the same class that still interleave database queries and string manipulation.
+
+**Legitimate solution.** Separate the **Functional Core** from the **Imperative Shell**. Extract recurrence rule truncation, occurrence expansion, conflict detection math, and status derivation into pure, deterministic functions that take plain domain values and return plain decisions or mutation plans. Keep the service method as a thin orchestrator that loads the required records, calls the pure functions, and persists the resulting plan inside a transaction.
+
+**Evidence.** Verify the pure functions directly with fast, zero-mock unit tests covering boundary transitions (exact overlap, adjacent slots, year rollovers, mid-series splits). Verify the service orchestrator with focused integration tests proving persistence and transaction behavior.
+
+**Boundary.** Do not extract trivial one-line getters into separate files or invent abstract "RuleEngine" hierarchies. Extract pure functions when branching, calculation, or transformation complexity makes I/O-coupled testing brittle.
+
+## Context plumbing and manual guards versus a deep boundary module
+
+**Context.** Every multi-tenant service method requires `db` and `organizationId` parameters and relies on developers remembering to append `eq(table.organizationId, orgId)` to every `SELECT`, `UPDATE`, and `DELETE`, and to strip `organizationId` from user `PATCH` payloads.
+
+**Tempting shortcut.** Add a code-review checklist rule reminding engineers never to forget `eq(table.organizationId, orgId)`, and thread `db` and `orgId` through every function signature across the codebase.
+
+**Legitimate solution.** Design a **deep boundary module** (such as a `TenantScope` bound to request-scoped `AsyncLocalStorage` and backed by database Row-Level Security). Expose high-leverage operations (`findFirst`, `findMany`, `insert`, `update`, `delete`, `paginate`, `transaction`) that automatically enforce tenant filtering on reads, override `organizationId` on inserts, strip primary keys and `organizationId` on updates, and set transaction-local RLS configuration on writes.
+
+**Evidence.** Prove via penetration tests that cross-tenant reads/updates/deletes return `404` and leave target data intact, that spoofed `organizationId` fields in `POST`/`PATCH` payloads are neutralized, and that calling the boundary outside an active tenant context fails fast.
+
+**Boundary.** Use scoped context only for compulsory cross-cutting boundaries (tenant isolation, auth session, transaction handle, tracing). Do not hide ordinary business arguments in ambient state.
+
+## Stringly-typed composite state and error-message matching versus Parse, don't validate
+
+**Context.** Virtual recurring appointment occurrences are identified by concatenating `"${masterId}_${isoDate}"` into the `id` field, and the frontend detects scheduling conflicts by checking `error.message.toLowerCase().includes("conflict")`.
+
+**Tempting shortcut.** Add more regexes and `lastIndexOf("_")` checks in every service and route that receives an `id`, and add more localized words to the error message `.includes(...)` check.
+
+**Legitimate solution.** Apply **Parse, don't validate** and make states explicit. Parse composite identifiers once at the boundary into a structured type (`{ masterId, occurrenceStart }` or a discriminated union) or pass `occurrenceStart` as an explicit parameter. For errors, return and branch on canonical machine-readable error codes (`error.code === "conflict"` or HTTP `409`) and structured metadata rather than human-facing copy.
+
+**Evidence.** Exercise both persisted UUIDs and recurring occurrence targets through the boundary parser, and verify that changing localized error wording never breaks client conflict recovery.
+
+**Boundary.** If an external protocol mandates a composite string token in URLs, confine encoding and decoding to a single boundary parser/serializer module so internal functions only ever receive the parsed structure.
+
+## Production backdoors and full-table scans written to appease weak test doubles
+
+**Context.** A unit test calls a service without a database instance, or uses a simplified in-memory mock DB that cannot evaluate SQL `JOIN`, `ORDER BY`, or date-range `>=` / `<=` predicates.
+
+**Tempting shortcut.** Add `if (!db) return { fakeSuccess: true }` inside the production service, or rewrite `service.list()` to load every row of every table into memory (`tenant.findMany(table)`) and filter/join them in a JavaScript `for` loop so the naive mock DB passes.
+
+**Legitimate solution.** Never degrade production correctness, security, or query complexity to accommodate an unfaithful test double. Remove `!db` fake-success branches so missing dependencies fail fast. Push filtering, joins, batch `IN (...)` lookups, and sorting down to the database query, and upgrade the test harness (for example, using an embedded SQL engine or a faithful fake) so tests verify the real query semantics.
+
+**Evidence.** Verify that production list and conflict queries bound rows in SQL by tenant and date/ID range without full-table dumps or $N+1$ loops, and that calling the service without required infrastructure fails immediately.
+
+**Boundary.** An explicit in-memory adapter behind a genuine port interface is valid when both production and test adapters honor the same contract. Putting `if (isTest)` or `if (!db)` shortcuts inside the production implementation itself is a defect.
+
+## Multi-step mutations and partial updates across transaction boundaries
+
+**Context.** Updating a team member modifies the member row, diffs and replaces eligible service and workstation links, and synchronizes member tags. Separately, toggling `isActive: false` via `PATCH` uses `createMemberSchema.partial()`.
+
+**Tempting shortcut.** Run the link updates in a loop, call `syncTags()` after the database transaction has already committed, and reuse `createSchema.partial()` even though `createSchema` attaches `.default(...)` values to optional fields.
+
+**Legitimate solution.** Execute all writes that form one logical business mutation inside a single transaction scope (`Unit of Work`) so a failure in tag or link synchronization rolls back the entire update. Define partial `PATCH` schemas without creation defaults so omitted fields stay `undefined` and never overwrite existing persisted values (`calendarColor`, `workingHours`, `hasLogin`).
+
+**Evidence.** Simulate a failure on the final step of the multi-step update and verify zero partial writes persist. Exercise a status-only `PATCH { isActive: false }` on a fully populated record and assert that all sibling fields and relations remain intact.
+
+**Boundary.** External side effects (such as sending an email or webhook) cannot be rolled back by a database transaction; trigger them after commit or through an outbox/idempotent job pattern rather than holding a database transaction open across network I/O.
