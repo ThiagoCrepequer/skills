@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Quality"
+  short_description: "Framework-agnostic, high-ROI test engineering and anti-slop auditing"
+  default_prompt: "Use $test-quality to design, write, or audit trustworthy, bug-sensitive, refactor-tolerant tests for this change."
